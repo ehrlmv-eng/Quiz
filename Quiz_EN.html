@@ -1,0 +1,780 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<!--
+  Quiz App
+  Copyright (c) 2026 ehrlmv-eng
+  GitHub: https://github.com/ehrlmv-eng/Quiz
+  Licensed under the MIT License.
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        :root {
+            --text-color: #333333;
+            --bg-color: #f5f5f5;
+            --btn-color: #4a90e2;
+            --font-size: 16px;
+            --spacing: 1rem;
+            --radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: var(--font-size);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 1rem;
+            padding-top: 80px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Control Panel */
+        .controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-color);
+            border-bottom: 2px solid var(--btn-color);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 100;
+            flex-wrap: wrap;
+            transition: background-color 0.3s ease;
+        }
+
+        .control-btn {
+            background: var(--btn-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.4rem 0.8rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s, background-color 0.3s ease;
+        }
+
+        .control-btn:hover {
+            opacity: 0.8;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--btn-color);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .reset-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.4rem 0.8rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .reset-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Home Screen */
+        .mode-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .mode-selection h1 {
+            font-size: calc(var(--font-size) * 1.8);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .mode-btn {
+            background: var(--btn-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 1.5rem 2rem;
+            font-size: calc(var(--font-size) * 1.2);
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+            transition: transform 0.2s, opacity 0.2s, background-color 0.3s ease;
+        }
+
+        .mode-btn:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+
+        .options-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .options-selector label {
+            font-weight: 600;
+            font-size: calc(var(--font-size) * 1);
+        }
+
+        .options-selector select {
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            border: 2px solid var(--btn-color);
+            font-size: calc(var(--font-size) * 1);
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        /* Quiz Screen */
+        .quiz-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .question-header {
+            font-size: calc(var(--font-size) * 1.5);
+            font-weight: 600;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: var(--text-color);
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option-btn {
+            background: var(--btn-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 1rem;
+            font-size: calc(var(--font-size) * 1);
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s, background-color 0.3s ease;
+            text-align: left;
+        }
+
+        .option-btn:hover {
+            opacity: 0.9;
+            transform: translateX(4px);
+        }
+
+        .option-btn.correct {
+            background: #4caf50 !important;
+        }
+
+        .option-btn.incorrect {
+            background: #f44336 !important;
+        }
+
+        /* Counter and Stats */
+        .stats {
+            text-align: center;
+            font-size: calc(var(--font-size) * 1.1);
+            font-weight: 600;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--radius);
+            color: var(--text-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--btn-color);
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        /* Results Screen */
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .result-score {
+            font-size: calc(var(--font-size) * 3);
+            font-weight: 700;
+            color: var(--btn-color);
+            transition: color 0.3s ease;
+        }
+
+        .result-message {
+            font-size: calc(var(--font-size) * 1.2);
+            line-height: 1.8;
+            max-width: 500px;
+            color: var(--text-color);
+        }
+
+        .result-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .result-btn {
+            background: var(--btn-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 1rem 1.5rem;
+            font-size: calc(var(--font-size) * 1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: opacity 0.2s, background-color 0.3s ease;
+        }
+
+        .result-btn:hover {
+            opacity: 0.9;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Mobile Adaptation */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+                padding-top: 70px;
+            }
+
+            .controls {
+                gap: 0.5rem;
+                padding: 0.3rem;
+            }
+
+            .control-btn, .reset-btn {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.9rem;
+            }
+
+            .color-picker {
+                width: 35px;
+                height: 35px;
+            }
+
+            .question-header {
+                font-size: 1.3rem;
+            }
+
+            .result-score {
+                font-size: calc(var(--font-size) * 2.5);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Control Panel -->
+    <div class="controls">
+        <button class="control-btn" onclick="adjustFontSize(-1)" title="Decrease font">A-</button>
+        <button class="control-btn" onclick="adjustFontSize(1)" title="Increase font">A+</button>
+        <input type="color" class="color-picker" id="text-color-picker" value="#333333" onchange="updateColor('--text-color', this.value)" title="Text color">
+        <input type="color" class="color-picker" id="bg-color-picker" value="#f5f5f5" onchange="updateColor('--bg-color', this.value)" title="Background color">
+        <input type="color" class="color-picker" id="btn-color-picker" value="#4a90e2" onchange="updateColor('--btn-color', this.value)" title="Button color">
+        <button class="reset-btn" onclick="resetSettings()" title="Reset settings">↺</button>
+    </div>
+
+    <!-- Home Screen -->
+    <div id="home-screen" class="screen active">
+        <div class="mode-selection">
+            <h1>Select mode</h1>
+            <button class="mode-btn" onclick="startMode('training')">📚 Training</button>
+            <button class="mode-btn" onclick="startMode('testing')">📝 Testing</button>
+            <div class="options-selector">
+                <label for="options-count">Answer options:</label>
+                <select id="options-count" onchange="updateOptionsCount(this.value)">
+                    <option value="2">2 options</option>
+                    <option value="3" selected>3 options</option>
+                    <option value="4">4 options</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" class="screen">
+        <div class="quiz-container">
+            <div class="question-header" id="question-text"></div>
+            <div class="options-list" id="options-container"></div>
+            <div class="stats" id="stats-display"></div>
+            <button class="mode-btn" onclick="finishQuiz()">Finish</button>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="result-screen" class="screen">
+        <div class="result-container">
+            <div class="result-score" id="final-score"></div>
+            <div class="result-message" id="result-message1"></div>
+            <div class="result-message" id="result-message2"></div>
+            <div class="result-buttons">
+                <button class="result-btn" onclick="restartQuiz()">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                        <path d="M21 3v5h-5"></path>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                        <path d="M3 21v-5h5"></path>
+                    </svg>
+                    Try again
+                </button>
+                <button class="result-btn" onclick="goHome()">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * @typedef {Object} QuizItem
+         * @property {string} question - Question text
+         * @property {string} answer - Answer text
+         */
+
+        /** @const {number} Number of question-answer pairs (change as needed) */
+        const TOTAL_PAIRS = 10;
+
+        /** @const {number} Number of questions in testing mode */
+        const TEST_QUESTIONS_COUNT = 6;
+
+        /** @const {Object} Default colors */
+        const DEFAULT_SETTINGS = {
+            textColor: '#333333',
+            bgColor: '#f5f5f5',
+            btnColor: '#4a90e2',
+            fontSize: 16
+        };
+
+        /**
+         * @type {QuizItem[]} Array of question-answer pairs
+         * Replace content with your data
+         */
+        const quizData = [
+            { question: "Question1", answer: "Answer1" },
+            { question: "Question2", answer: "Answer2" },
+            { question: "Question3", answer: "Answer3" },
+            { question: "Question4", answer: "Answer4" },
+            { question: "Question5", answer: "Answer5" },
+            { question: "Question6", answer: "Answer6" },
+            { question: "Question7", answer: "Answer7" },
+            { question: "Question8", answer: "Answer8" },
+            { question: "Question9", answer: "Answer9" },
+            { question: "Question10", answer: "Answer10" }
+        ];
+
+        /** @type {Object} Application state */
+        const state = {
+            mode: null, // 'training' | 'testing'
+            optionsCount: 3,
+            score: 0,
+            totalQuestions: 0,
+            usedIndices: new Set(), // for testing
+            lastIndices: [], // last 2 indices for training
+            currentQuestion: null
+        };
+
+        /** Initialization on load */
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+        });
+
+        /** Load settings from localStorage */
+        function loadSettings() {
+            const saved = localStorage.getItem('quizSettings');
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    if (settings.fontSize) {
+                        document.documentElement.style.setProperty('--font-size', settings.fontSize + 'px');
+                    }
+                    if (settings.textColor) {
+                        document.documentElement.style.setProperty('--text-color', settings.textColor);
+                        document.getElementById('text-color-picker').value = settings.textColor;
+                    }
+                    if (settings.bgColor) {
+                        document.documentElement.style.setProperty('--bg-color', settings.bgColor);
+                        document.getElementById('bg-color-picker').value = settings.bgColor;
+                    }
+                    if (settings.btnColor) {
+                        document.documentElement.style.setProperty('--btn-color', settings.btnColor);
+                        document.getElementById('btn-color-picker').value = settings.btnColor;
+                    }
+                } catch (e) {
+                    console.error('Error loading settings:', e);
+                }
+            }
+        }
+
+        /** Save settings to localStorage */
+        function saveSettings() {
+            const settings = {
+                fontSize: parseInt(document.documentElement.style.getPropertyValue('--font-size')) || DEFAULT_SETTINGS.fontSize,
+                textColor: document.getElementById('text-color-picker').value,
+                bgColor: document.getElementById('bg-color-picker').value,
+                btnColor: document.getElementById('btn-color-picker').value
+            };
+            localStorage.setItem('quizSettings', JSON.stringify(settings));
+        }
+
+        /** Reset settings to defaults */
+        function resetSettings() {
+            document.documentElement.style.setProperty('--font-size', DEFAULT_SETTINGS.fontSize + 'px');
+            document.documentElement.style.setProperty('--text-color', DEFAULT_SETTINGS.textColor);
+            document.documentElement.style.setProperty('--bg-color', DEFAULT_SETTINGS.bgColor);
+            document.documentElement.style.setProperty('--btn-color', DEFAULT_SETTINGS.btnColor);
+            
+            document.getElementById('text-color-picker').value = DEFAULT_SETTINGS.textColor;
+            document.getElementById('bg-color-picker').value = DEFAULT_SETTINGS.bgColor;
+            document.getElementById('btn-color-picker').value = DEFAULT_SETTINGS.btnColor;
+            
+            localStorage.removeItem('quizSettings');
+        }
+
+        /**
+         * Change font size
+         * @param {number} delta - Change in px (+1 or -1)
+         */
+        function adjustFontSize(delta) {
+            const currentSize = parseInt(document.documentElement.style.getPropertyValue('--font-size')) || DEFAULT_SETTINGS.fontSize;
+            const newSize = Math.max(12, Math.min(24, currentSize + delta * 2));
+            document.documentElement.style.setProperty('--font-size', newSize + 'px');
+            saveSettings();
+        }
+
+        /**
+         * Update CSS color variable
+         * @param {string} varName - CSS variable name
+         * @param {string} color - HEX color
+         */
+        function updateColor(varName, color) {
+            document.documentElement.style.setProperty(varName, color);
+            saveSettings();
+        }
+
+        /**
+         * Update answer options count
+         * @param {string} value - Number of options (2, 3 or 4)
+         */
+        function updateOptionsCount(value) {
+            state.optionsCount = parseInt(value);
+        }
+
+        /**
+         * Switch between screens
+         * @param {string} screenId - Screen ID
+         */
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        /**
+         * Start selected mode
+         * @param {'training'|'testing'} mode - Working mode
+         */
+        function startMode(mode) {
+            state.mode = mode;
+            state.score = 0;
+            state.totalQuestions = 0;
+            state.usedIndices.clear();
+            state.lastIndices = [];
+            showScreen('quiz-screen');
+            loadNextQuestion();
+        }
+
+        /**
+         * Get random index from available
+         * @returns {number|null} Index or null if all used
+         */
+        function getRandomIndex() {
+            if (state.mode === 'testing') {
+                // In testing all questions are unique
+                const available = [];
+                for (let i = 0; i < TOTAL_PAIRS; i++) {
+                    if (!state.usedIndices.has(i)) {
+                        available.push(i);
+                    }
+                }
+                if (available.length === 0) return null;
+                const index = available[Math.floor(Math.random() * available.length)];
+                state.usedIndices.add(index);
+                return index;
+            } else {
+                // In training avoid consecutive repeats (last 2)
+                const available = [];
+                for (let i = 0; i < TOTAL_PAIRS; i++) {
+                    if (!state.lastIndices.includes(i)) {
+                        available.push(i);
+                    }
+                }
+                if (available.length === 0) {
+                    // If all options exhausted, reset last ones
+                    state.lastIndices = [];
+                    for (let i = 0; i < TOTAL_PAIRS; i++) {
+                        available.push(i);
+                    }
+                }
+                const index = available[Math.floor(Math.random() * available.length)];
+                state.lastIndices.push(index);
+                if (state.lastIndices.length > 2) {
+                    state.lastIndices.shift();
+                }
+                return index;
+            }
+        }
+
+        /** Load next question */
+        function loadNextQuestion() {
+            // Check testing completion
+            if (state.mode === 'testing' && state.totalQuestions >= TEST_QUESTIONS_COUNT) {
+                finishQuiz();
+                return;
+            }
+
+            const index = getRandomIndex();
+            if (index === null) {
+                finishQuiz();
+                return;
+            }
+
+            const item = quizData[index];
+            
+            // Randomly choose: show question or answer as header
+            const showQuestion = Math.random() > 0.5;
+            const header = showQuestion ? item.question : item.answer;
+            const correctAnswer = showQuestion ? item.answer : item.question;
+            
+            state.currentQuestion = { correctAnswer, itemIndex: index };
+            
+            // Display header
+            document.getElementById('question-text').textContent = header;
+            
+            // Generate answer options
+            const options = [correctAnswer];
+            const otherItems = quizData.filter((_, i) => i !== index);
+            
+            // Add wrong options
+            while (options.length < state.optionsCount && otherItems.length > 0) {
+                const randomIndex = Math.floor(Math.random() * otherItems.length);
+                const wrongAnswer = showQuestion 
+                    ? otherItems[randomIndex].answer 
+                    : otherItems[randomIndex].question;
+                if (!options.includes(wrongAnswer)) {
+                    options.push(wrongAnswer);
+                }
+                otherItems.splice(randomIndex, 1);
+            }
+            
+            // Shuffle options
+            options.sort(() => Math.random() - 0.5);
+            
+            // Display option buttons
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.onclick = () => checkAnswer(btn, option === correctAnswer);
+                container.appendChild(btn);
+            });
+            
+            // Update stats
+            updateStats();
+        }
+
+        /**
+         * Check answer
+         * @param {HTMLButtonElement} btn - Clicked button
+         * @param {boolean} isCorrect - Answer correctness
+         */
+        function checkAnswer(btn, isCorrect) {
+            // Disable all buttons
+            const allButtons = document.querySelectorAll('.option-btn');
+            allButtons.forEach(b => {
+                b.disabled = true;
+            });
+            
+            // Highlight selected answer
+            btn.classList.add(isCorrect ? 'correct' : 'incorrect');
+            
+            // If answer is wrong - highlight correct in green
+            if (!isCorrect && state.currentQuestion) {
+                allButtons.forEach(b => {
+                    if (b.textContent === state.currentQuestion.correctAnswer) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+            
+            if (isCorrect) {
+                state.score++;
+            }
+            state.totalQuestions++;
+            
+            // Move to next question with delay
+            setTimeout(() => {
+                loadNextQuestion();
+            }, 1000);
+        }
+
+        /** Update stats display */
+        function updateStats() {
+            const statsDisplay = document.getElementById('stats-display');
+            if (state.mode === 'testing') {
+                const progress = (state.totalQuestions / TEST_QUESTIONS_COUNT) * 100;
+                statsDisplay.innerHTML = `
+                    Question ${state.totalQuestions + 1} of ${TEST_QUESTIONS_COUNT}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                `;
+            } else {
+                statsDisplay.textContent = `${state.score} of ${state.totalQuestions}`;
+            }
+        }
+
+        /** Finish quiz and show results */
+        function finishQuiz() {
+            showScreen('result-screen');
+            
+            const scoreElement = document.getElementById('final-score');
+            
+            if (state.mode === 'training') {
+                scoreElement.textContent = `${state.score} of ${state.totalQuestions}`;
+                const percentage = state.totalQuestions > 0 ? (state.score / state.totalQuestions) * 100 : 0;
+                let message1 = '';
+                let message2 = '';
+                if (percentage >= 80) {
+                    message1 = 'Excellent result!';
+                    message2 = 'Keep it up! 🎉';
+                } else if (percentage >= 60) {
+                    message1 = 'Good result!';
+                    message2 = 'Room to grow! 💪';
+                } else if (percentage >= 40) {
+                    message1 = 'Not bad for a start!';
+                    message2 = 'Practice makes you a master! 📚';
+                } else {
+                    message1 = 'Don\'t give up!';
+                    message2 = 'Every attempt brings you closer to success! 🚀';
+                }
+                document.getElementById('result-message1').textContent = message1;
+                document.getElementById('result-message2').textContent = message2;
+            } else {
+                // Testing - grade scale
+                let grade = '';
+                let message1 = '';
+                let message2 = '';
+                if (state.score <= 1) {
+                    grade = '1';
+                    message1 = 'This is just the beginning!';
+                    message2 = 'You have many discoveries ahead! 🌱';
+                } else if (state.score === 2) {
+                    grade = '2';
+                    message1 = 'You\'re on the right track!';
+                    message2 = 'Keep learning! 📖';
+                } else if (state.score === 3) {
+                    grade = '3';
+                    message1 = 'Satisfactory result!';
+                    message2 = 'There\'s potential for growth! ⭐';
+                } else if (state.score === 4) {
+                    grade = '4';
+                    message1 = 'Good result!';
+                    message2 = 'You\'re well prepared! 👍';
+                } else if (state.score === 5) {
+                    grade = '5';
+                    message1 = 'Excellent!';
+                    message2 = 'You\'re a real expert! 🏆';
+                } else {
+                    grade = '5+';
+                    message1 = 'Outstanding!';
+                    message2 = 'You\'re a master at this! 🌟';
+                }
+                scoreElement.textContent = grade;
+                document.getElementById('result-message1').textContent = message1;
+                document.getElementById('result-message2').textContent = message2;
+            }
+        }
+
+        /** Restart quiz in same mode */
+        function restartQuiz() {
+            startMode(state.mode);
+        }
+
+        /** Return to home screen */
+        function goHome() {
+            state.mode = null;
+            state.score = 0;
+            state.totalQuestions = 0;
+            state.usedIndices.clear();
+            state.lastIndices = [];
+            showScreen('home-screen');
+        }
+    </script>
+</body>
+</html>
